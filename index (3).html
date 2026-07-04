@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OsseusAI — Virtual Orthopedics Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:            #0A1220;
+    --panel:         #101B2E;
+    --panel-raised:  #16233A;
+    --line:          #223050;
+    --line-soft:     #1A2740;
+    --text:          #EDEFF4;
+    --text-dim:      #9AA8C0;
+    --text-faint:    #5E6E8C;
+    --bone:          #F1EADB;
+    --teal:          #2DD9C4;
+    --teal-dim:      #1A8F80;
+    --violet:        #9C8CFF;
+    --amber:         #F4A94A;
+    --rose:          #F0698A;
+    --radius-s: 8px;
+    --radius-m: 14px;
+    --radius-l: 22px;
+    --disp: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(1100px 600px at 85% -10%, rgba(156,140,255,0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(45,217,196,0.08), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--teal);color:#04140F;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+  h1,h2,h3,h4{font-family:var(--disp);letter-spacing:-0.01em;}
+
+  /* ---------- Utility ---------- */
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--teal); display:flex; align-items:center; gap:8px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;
+    font-family:var(--mono);font-size:11px;letter-spacing:0.04em;border:1px solid var(--line);
+    background:var(--panel-raised);color:var(--text-dim);
+  }
+  .pill.live{color:var(--teal);border-color:rgba(45,217,196,0.35);background:rgba(45,217,196,0.08);}
+  .pill.warn{color:var(--amber);border-color:rgba(244,169,74,0.35);background:rgba(244,169,74,0.08);}
+
+  /* ================= LOGIN ================= */
+  #login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:24px;position:relative;
+  }
+  .login-grid{
+    display:grid;grid-template-columns:1.1fr 1fr;max-width:980px;width:100%;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-l);
+    overflow:hidden; box-shadow:0 40px 80px -30px rgba(0,0,0,0.6);
+  }
+  .login-visual{
+    position:relative; background:
+      linear-gradient(160deg, #0D1A2E 0%, #0A1220 60%);
+    border-right:1px solid var(--line);
+    padding:44px 40px; display:flex; flex-direction:column; justify-content:space-between;
+    min-height:560px;
+  }
+  .login-visual svg{position:absolute; inset:0; width:100%; height:100%; opacity:0.9;}
+  .brand-mark{display:flex;align-items:center;gap:10px;position:relative;z-index:2;}
+  .brand-mark .glyph{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(135deg,var(--teal),var(--violet));
+    display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;color:#081018;
+  }
+  .brand-mark span{font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-0.02em;}
+  .login-copy{position:relative;z-index:2;}
+  .login-copy h1{font-size:30px;line-height:1.2;color:var(--bone);max-width:360px;}
+  .login-copy p{color:var(--text-dim);margin-top:12px;max-width:340px;font-size:14px;line-height:1.6;}
+  .login-stats{display:flex;gap:26px;position:relative;z-index:2;}
+  .login-stats div b{font-family:var(--mono);font-size:20px;color:var(--teal);display:block;}
+  .login-stats div span{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;}
+
+  .login-form{padding:44px 44px;display:flex;flex-direction:column;justify-content:center;}
+  .login-form h2{font-size:22px;margin-bottom:4px;}
+  .login-form .sub{color:var(--text-dim);font-size:13px;margin-bottom:26px;}
+  .role-toggle{display:flex;background:var(--panel-raised);border:1px solid var(--line);border-radius:100px;padding:4px;margin-bottom:22px;}
+  .role-toggle button{
+    flex:1;border:none;background:transparent;color:var(--text-dim);padding:9px 0;border-radius:100px;
+    font-size:13px;font-weight:600;transition:all .2s;
+  }
+  .role-toggle button.active{background:var(--teal);color:#04140F;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-faint);margin-bottom:6px;}
+  .field input{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-s);
+    padding:11px 13px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--teal);}
+  .btn-primary{
+    width:100%;background:linear-gradient(135deg,var(--teal),#20B8A5);border:none;color:#04140F;
+    padding:12px 0;border-radius:var(--radius-s);font-weight:700;font-size:14px;margin-top:6px;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(45,217,196,0.5);}
+  .login-foot{margin-top:18px;font-size:13px;color:var(--text-faint);text-align:center;}
+  .login-foot b{color:var(--teal);font-weight:600;cursor:pointer;}
+
+  /* ================= APP SHELL ================= */
+  #app-shell{display:none;min-height:100vh;grid-template-columns:250px 1fr;}
+  #app-shell.active{display:grid;}
+  .sidebar{
+    background:var(--panel);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;
+  }
+  .sidebar .brand-mark{padding:0 6px 22px 6px;border-bottom:1px solid var(--line-soft);margin-bottom:18px;}
+  .nav-group-label{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);padding:14px 10px 8px;}
+  .nav-item{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--radius-s);
+    color:var(--text-dim);font-size:13.5px;font-weight:500;margin-bottom:2px;transition:all .15s;
+    border:1px solid transparent;
+  }
+  .nav-item:hover{background:var(--panel-raised);color:var(--text);}
+  .nav-item.active{background:rgba(45,217,196,0.09);color:var(--teal);border-color:rgba(45,217,196,0.25);}
+  .nav-item .ic{width:16px;text-align:center;font-size:14px;}
+  .sidebar-foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:10px;}
+  .avatar{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--teal));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#04140F;flex-shrink:0;}
+  .sidebar-foot .who{flex:1;min-width:0;}
+  .sidebar-foot .who b{font-size:12.5px;display:block;}
+  .sidebar-foot .who span{font-size:11px;color:var(--text-faint);}
+  .logout-btn{background:none;border:1px solid var(--line);color:var(--text-faint);border-radius:7px;padding:6px 8px;font-size:11px;}
+  .logout-btn:hover{color:var(--rose);border-color:var(--rose);}
+
+  main{padding:30px 38px 60px;max-width:1180px;}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;flex-wrap:wrap;gap:14px;}
+  .page-head h1{font-size:25px;}
+  .page-head .sub{color:var(--text-dim);font-size:13.5px;margin-top:4px;}
+  .page{display:none;animation:fade .35s ease;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:20px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:18px 20px;position:relative;overflow:hidden;}
+  .stat-card .ic{font-size:18px;margin-bottom:14px;opacity:0.85;}
+  .stat-card b{font-family:var(--disp);font-size:26px;display:block;}
+  .stat-card span{font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;}
+  .stat-card.accent-teal b{color:var(--teal);}
+  .stat-card.accent-violet b{color:var(--violet);}
+  .stat-card.accent-amber b{color:var(--amber);}
+  .stat-card.accent-rose b{color:var(--rose);}
+
+  .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;}
+  .card h3{font-size:15px;margin-bottom:4px;}
+  .card .desc{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin-bottom:16px;}
+
+  .feat-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+  .feat-row .flabel{width:110px;font-size:12px;color:var(--text-dim);flex-shrink:0;}
+  .feat-bar{flex:1;height:7px;background:var(--line-soft);border-radius:6px;overflow:hidden;}
+  .feat-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--amber),var(--teal));border-radius:6px;transition:width 1s cubic-bezier(.2,.8,.2,1);}
+
+  .btn-ai{
+    background:linear-gradient(135deg,var(--violet),#7A6BE0);border:none;color:#0B0620;
+    padding:11px 16px;border-radius:var(--radius-s);font-weight:700;font-size:13px;width:100%;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s;
+  }
+  .btn-ai:hover{transform:translateY(-1px);}
+  .btn-outline{
+    background:transparent;border:1px solid var(--line);color:var(--text-dim);padding:9px 14px;
+    border-radius:var(--radius-s);font-size:12.5px;font-weight:600;
+  }
+  .btn-outline:hover{border-color:var(--teal);color:var(--teal);}
+
+  /* Patients */
+  .patient-list{display:flex;flex-direction:column;gap:10px;}
+  .patient-row{
+    display:grid;grid-template-columns:1.6fr 1fr 0.8fr 1.3fr auto;align-items:center;gap:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-m);padding:15px 18px;
+    transition:border-color .15s;
+  }
+  .patient-row:hover{border-color:rgba(45,217,196,0.3);}
+  .patient-name b{display:block;font-size:14px;}
+  .patient-name span{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);}
+  .tag{font-size:11px;color:var(--text-dim);}
+  .pain-seq{display:flex;gap:3px;align-items:flex-end;height:24px;}
+  .pain-seq i{width:6px;border-radius:2px;background:var(--amber);}
+  .pain-seq i.low{background:var(--teal);}
+
+  /* Console / scan */
+  .upload-zone{
+    border:1.5px dashed var(--line);border-radius:var(--radius-m);padding:30px;text-align:center;
+    color:var(--text-dim);font-size:13px;cursor:pointer;transition:all .15s;position:relative;
+  }
+  .upload-zone:hover{border-color:var(--teal);color:var(--teal);}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .preview-wrap{margin-top:14px;border-radius:var(--radius-s);overflow:hidden;border:1px solid var(--line);position:relative;}
+  .preview-wrap img{width:100%;display:block;max-height:260px;object-fit:cover;filter:grayscale(1) contrast(1.15);}
+  .scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);box-shadow:0 0 12px var(--teal);top:0;animation:sweep 1.8s linear infinite;display:none;}
+  @keyframes sweep{0%{top:0;}100%{top:100%;}}
+  .console{
+    background:#060B14;border:1px solid var(--line);border-radius:var(--radius-s);padding:16px;
+    font-family:var(--mono);font-size:11.5px;line-height:1.9;color:#8FE3D6;height:280px;overflow-y:auto;
+  }
+  .console .l{opacity:0;animation:consoleIn .3s forwards;}
+  @keyframes consoleIn{to{opacity:1;}}
+  .console .tag-ok{color:var(--teal);}
+  .console .tag-warn{color:var(--amber);}
+  .result-card{margin-top:16px;background:var(--panel-raised);border:1px solid rgba(45,217,196,0.3);border-radius:var(--radius-m);padding:16px 18px;display:none;}
+  .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:12px;}
+  .result-grid div b{display:block;font-family:var(--disp);font-size:18px;color:var(--teal);}
+  .result-grid div span{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;}
+
+  /* 3D twin page */
+  .twin-wrap{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;}
+  #twin-canvas-holder{
+    height:520px;border-radius:var(--radius-m);border:1px solid var(--line);overflow:hidden;position:relative;
+    background:radial-gradient(circle at 50% 30%, #10203A 0%, #060B14 75%);
+  }
+  #twin-canvas-holder canvas{display:block;}
+  .twin-controls{position:absolute;bottom:14px;left:14px;display:flex;gap:8px;z-index:5;}
+  .twin-toggle{
+    background:rgba(22,35,58,0.92);backdrop-filter:blur(6px);border:1px solid var(--line);color:var(--text);
+    padding:7px 12px;border-radius:100px;font-size:11.5px;font-weight:600;
+  }
+  .twin-toggle.on{color:var(--teal);border-color:rgba(45,217,196,0.4);background:rgba(45,217,196,0.1);}
+  .pipeline-log{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);line-height:2;max-height:420px;overflow-y:auto;}
+  .pipeline-log .k{color:var(--violet);}
+
+  /* toast */
+  #toast-host{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:10px;z-index:999;}
+  .toast{
+    background:var(--panel-raised);border:1px solid var(--line);border-left:3px solid var(--teal);
+    border-radius:10px;padding:12px 16px;font-size:12.5px;max-width:300px;box-shadow:0 20px 40px -12px rgba(0,0,0,0.5);
+    animation:toastIn .3s ease;
+  }
+  .toast b{display:block;font-size:12.5px;margin-bottom:2px;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+  @media(max-width:900px){
+    .login-grid{grid-template-columns:1fr;}
+    .login-visual{display:none;}
+    #app-shell{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .grid-2, .twin-wrap{grid-template-columns:1fr;}
+    .patient-row{grid-template-columns:1fr;text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="login-grid">
+    <div class="login-visual">
+      <svg viewBox="0 0 400 560" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="boneGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2DD9C4" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#9C8CFF" stop-opacity="0.15"/>
+          </linearGradient>
+        </defs>
+        <g stroke="url(#boneGrad)" stroke-width="1" fill="none" opacity="0.6">
+          <path d="M180 40 Q160 200 190 340 Q170 420 200 520"/>
+          <path d="M220 40 Q240 200 210 340 Q230 420 200 520"/>
+          <circle cx="180" cy="40" r="26"/>
+          <circle cx="220" cy="40" r="26"/>
+          <circle cx="200" cy="520" r="30"/>
+        </g>
+      </svg>
+      <div class="brand-mark">
+        <div class="glyph">O</div>
+        <span>OsseusAI</span>
+      </div>
+      <div class="login-copy">
+        <h1>Bone and joint care, modeled before it's performed.</h1>
+        <p>A digital twin of every patient's musculoskeletal system — built from imaging, refined by AI, and updated in real time.</p>
+      </div>
+      <div class="login-stats">
+        <div><b>+20%</b><span>Dice Score</span></div>
+        <div><b>+22%</b><span>IoU</span></div>
+        <div><b>−28%</b><span>Hausdorff Dist.</span></div>
+      </div>
+    </div>
+    <div class="login-form">
+      <h2>Welcome back</h2>
+      <div class="sub">Sign in to access your clinical dashboard</div>
+      <div class="role-toggle">
+        <button class="active" id="role-admin" onclick="setRole('admin')">Clinician / Admin</button>
+        <button id="role-patient" onclick="setRole('patient')">Patient</button>
+      </div>
+      <div class="field">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="you@osseusai.health" value="dr.santhosh@osseusai.health">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" value="••••••••">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign in</button>
+      <div class="login-foot">Demo mode — any credentials work. <b onclick="doLogin()">Skip to dashboard →</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app-shell">
+  <aside class="sidebar">
+    <div class="brand-mark">
+      <div class="glyph">O</div>
+      <span>OsseusAI</span>
+    </div>
+
+    <div class="nav-group-label" id="nav-group-label">Clinical modules</div>
+    <div class="nav-item active" data-page="dashboard" onclick="goPage('dashboard')"><span class="ic">◆</span> Dashboard</div>
+    <div class="nav-item" data-page="patients" onclick="goPage('patients')"><span class="ic">◇</span> Patients</div>
+    <div class="nav-item" data-page="scan" onclick="goPage('scan')"><span class="ic">▣</span> Scan Analysis</div>
+    <div class="nav-item" data-page="twin" onclick="goPage('twin')"><span class="ic">◈</span> 3D Twin Model</div>
+
+    <div class="sidebar-foot">
+      <div class="avatar" id="user-avatar">SG</div>
+      <div class="who">
+        <b id="user-name">Dr. Santhosh G</b>
+        <span id="user-role">Admin view</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Exit</button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ---------- DASHBOARD ---------- -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <div class="sub">Virtual Orthopedics — cohort overview and recovery forecasting</div>
+        </div>
+        <span class="pill live"><span class="dot"></span> System online</span>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card accent-teal"><div class="ic">◆</div><b id="stat-patients">48</b><span>Active patients</span></div>
+        <div class="stat-card accent-violet"><div class="ic">↗</div><b>76%</b><span>Avg healing rate</span></div>
+        <div class="stat-card accent-amber"><div class="ic">▲</div><b id="stat-risk">3</b><span>Risk alerts</span></div>
+        <div class="stat-card accent-rose"><div class="ic">◷</div><b id="stat-eta">— wks</b><span>Avg recovery ETA</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <span class="pill" style="margin-bottom:12px;">Ensemble model</span>
+          <h3>Random Forest recovery-time prediction</h3>
+          <div class="desc">A Random Forest regressor trained on historical fracture-healing timelines evaluates 40+ non-linear clinical features — initial bone density, patient age, fracture gap, mobility scores — to forecast recovery duration for the current cohort.</div>
+          <div class="feat-row"><div class="flabel">Initial density</div><div class="feat-bar"><i style="width:0%" data-target="82"></i></div></div>
+          <div class="feat-row"><div class="flabel">Patient age</div><div class="feat-bar"><i style="width:0%" data-target="64"></i></div></div>
+          <div class="feat-row"><div class="flabel">Fracture gap</div><div class="feat-bar"><i style="width:0%" data-target="71"></i></div></div>
+          <div class="feat-row"><div class="flabel">Mobility score</div><div class="feat-bar"><i style="width:0%" data-target="45"></i></div></div>
+          <button class="btn-ai" style="margin-top:8px;" onclick="predictCohortETA()">⚙ Predict cohort ETA</button>
+        </div>
+
+        <div class="card">
+          <h3>Upcoming interventions</h3>
+          <div class="desc">Auto-generated from digital twin monitoring &amp; wearable sensor thresholds.</div>
+          <div id="alerts-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PATIENTS ---------- -->
+    <section class="page" id="page-patients">
+      <div class="page-head">
+        <div>
+          <h1>Patients</h1>
+          <div class="sub">LSTM sequence analysis — pain trajectory, therapy adherence, vitals</div>
+        </div>
+        <span class="pill">6 records</span>
+      </div>
+      <div class="grid-2" style="grid-template-columns:1fr 380px;">
+        <div class="patient-list" id="patient-list"></div>
+        <div class="card">
+          <span class="pill" style="margin-bottom:12px;">Recurrent neural network · real-time</span>
+          <h3>LSTM network analysis</h3>
+          <div class="desc" id="lstm-desc">Select a patient to analyze their sequential pain, therapy and vitals history.</div>
+          <button class="btn-ai" onclick="runLSTM()">✦ Generate recovery solutions</button>
+          <div id="lstm-output" style="margin-top:16px;display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- SCAN ANALYSIS ---------- -->
+    <section class="page" id="page-scan">
+      <div class="page-head">
+        <div>
+          <h1>Scan Analysis</h1>
+          <div class="sub">CNN-based bone segmentation &amp; healing-stage classification</div>
+        </div>
+        <span class="pill">ResNet-50 v2</span>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="margin-bottom:12px;">Upload medical imaging</h3>
+          <label class="upload-zone" id="upload-zone">
+            <input type="file" accept="image/*" id="file-input" onchange="handleUpload(event)">
+            <div id="upload-label">📁 Drop an X-ray, CT or MRI image here, or click to browse</div>
+          </label>
+          <div class="preview-wrap" id="preview-wrap" style="display:none;">
+            <img id="preview-img" src="">
+            <div class="scan-line" id="scan-line"></div>
+          </div>
+          <button class="btn-ai" style="margin-top:14px;" id="run-cnn-btn" onclick="runCNN()" disabled>▶ Run CNN analysis</button>
+
+          <div class="result-card" id="result-card">
+            <span class="pill live"><span class="dot"></span> Analysis complete</span>
+            <h3 style="margin-top:10px;">Soft callus phase — Stage 2</h3>
+            <div class="desc" style="margin-bottom:0;">Bone segmentation complete. Callus forming along the fracture margin with slight mal-union risk detected on the distal edge.</div>
+            <div class="result-grid">
+              <div><b id="res-confidence">98.4%</b><span>Confidence</span></div>
+              <div><b id="res-density">Normal</b><span>Bone density</span></div>
+              <div><b id="res-risk">Low</b><span>Mal-union risk</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:2px;">CNN output console</h3>
+          <div class="desc">Live inference log</div>
+          <div class="console" id="console-log">
+            <div class="l" style="animation-delay:0s;">&gt; Awaiting image input…</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 3D TWIN ---------- -->
+    <section class="page" id="page-twin">
+      <div class="page-head">
+        <div>
+          <h1>3D Twin Model</h1>
+          <div class="sub">Volumetric mesh reconstruction with fracture overlay — drag to rotate, scroll to zoom</div>
+        </div>
+        <span class="pill live"><span class="dot"></span> Reconstruction active</span>
+      </div>
+      <div class="twin-wrap">
+        <div id="twin-canvas-holder">
+          <div id="twin-fallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:30px;color:var(--text-dim);font-size:13px;z-index:10;">
+            <div style="font-size:26px;">⚠</div>
+            <div>3D viewer failed to load.<br>This usually means the Three.js CDN script was blocked (ad-blocker, offline, or a strict network/firewall).<br>Try refreshing, or check your internet connection.</div>
+          </div>
+          <div class="twin-controls">
+            <button class="twin-toggle on" id="toggle-fracture" onclick="toggleTwinFeature('fracture')">⚠ Fracture overlay</button>
+            <button class="twin-toggle" id="toggle-density" onclick="toggleTwinFeature('density')">◆ Density map</button>
+            <button class="twin-toggle" id="toggle-spin" onclick="toggleTwinFeature('spin')">↻ Auto-rotate</button>
+          </div>
+        </div>
+        <div class="card">
+          <span class="pill" style="margin-bottom:12px;">Processing pipeline</span>
+          <h3>Reconstruction tech specs</h3>
+          <div class="pipeline-log">
+            <div><span class="k">Geometry mode</span> — Simulated multi-slice container</div>
+            <div><span class="k">Segmentation</span> — Grayscale depth approximation</div>
+            <div><span class="k">Space</span> — Reconstructed in a gravity-free virtual environment</div>
+            <div><span class="k">Output</span> — Volumetric mesh with fracture color overlay</div>
+            <div><span class="k">Backbone</span> — ResNet-50 + EfficientNet transfer learning</div>
+            <div><span class="k">Refinement</span> — Structure-from-Motion spatial alignment</div>
+            <div><span class="k">Renderer</span> — Three.js, real-time interactive viewport</div>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft);">
+            <div class="desc" style="margin-bottom:8px;">Interact with the structure using drag-to-rotate, scroll-to-zoom, and the toggles above to inspect fracture location and simulated density variation.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast-host"></div>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  role: 'admin',
+  patients: [
+    {id:'PT-010', name:'Jane Smith', fracture:'Tibia', week:8, pain:[7,6,6,5,4,4,3,2], eta:14, density:0.81},
+    {id:'PT-011', name:'Mike Johnson', fracture:'Femur', week:5, pain:[8,8,7,7,6,5], eta:20, density:0.64},
+    {id:'PT-012', name:'Alex Williams', fracture:'Clavicle', week:3, pain:[6,5,4,3], eta:9, density:0.90},
+    {id:'PT-013', name:'Priya Raman', fracture:'Wrist (Radius)', week:6, pain:[5,5,4,3,3,2], eta:11, density:0.86},
+    {id:'PT-014', name:'Karthik Krishna', fracture:'Fibula', week:2, pain:[7,7,6,6], eta:16, density:0.72},
+    {id:'PT-015', name:'Santhosh G', fracture:'Ankle', week:10, pain:[4,3,3,2,2,1,1,1,1,0], eta:4, density:0.93},
+  ],
+  selectedPatient: null,
+  twin: { fracture:true, density:false, spin:false }
+};
+
+/* ============================================================
+   LOGIN
+============================================================ */
+function setRole(r){
+  state.role = r;
+  document.getElementById('role-admin').classList.toggle('active', r==='admin');
+  document.getElementById('role-patient').classList.toggle('active', r==='patient');
+}
+
+function doLogin(){
+  document.getElementById('login-screen').style.display = 'none';
+  const shell = document.getElementById('app-shell');
+  shell.classList.add('active');
+
+  const navLabel = document.getElementById('nav-group-label');
+  if(state.role === 'patient'){
+    document.getElementById('user-name').textContent = 'Jane Smith';
+    document.getElementById('user-role').textContent = 'Patient view';
+    document.getElementById('user-avatar').textContent = 'JS';
+    navLabel.textContent = 'My care';
+  } else {
+    document.getElementById('user-name').textContent = 'Dr. Santhosh G';
+    document.getElementById('user-role').textContent = 'Admin view';
+    document.getElementById('user-avatar').textContent = 'SG';
+    navLabel.textContent = 'Clinical modules';
+  }
+
+  renderPatientList();
+  renderAlerts();
+  animateFeatureBars();
+  initTwin();
+  setTimeout(()=> toast('Reminder', 'Mike Johnson (PT-011) is due for a follow-up scan in 2 days.'), 2600);
+}
+
+function doLogout(){
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+function goPage(name){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(name === 'twin') setTimeout(()=>onTwinResize(), 50);
+}
+
+/* ============================================================
+   DASHBOARD — Random Forest ETA
+============================================================ */
+function animateFeatureBars(){
+  document.querySelectorAll('.feat-bar i').forEach(bar=>{
+    requestAnimationFrame(()=>{ bar.style.width = bar.dataset.target + '%'; });
+  });
+}
+
+function predictCohortETA(){
+  const btn = event.target;
+  btn.textContent = '⚙ Computing…';
+  btn.disabled = true;
+  setTimeout(()=>{
+    const avgDensity = state.patients.reduce((a,p)=>a+p.density,0)/state.patients.length;
+    const avgWeek = state.patients.reduce((a,p)=>a+p.week,0)/state.patients.length;
+    const eta = Math.max(3, Math.round(22 - avgDensity*14 - avgWeek*0.4));
+    document.getElementById('stat-eta').textContent = eta + ' wks';
+    btn.textContent = '⚙ Predict cohort ETA';
+    btn.disabled = false;
+    toast('Random Forest', `Cohort ETA recalculated: ${eta} weeks (based on ${state.patients.length} active trajectories).`);
+  }, 900);
+}
+
+function renderAlerts(){
+  const risky = state.patients.filter(p=>p.pain[p.pain.length-1] >= 5 || p.density < 0.75);
+  document.getElementById('stat-risk').textContent = risky.length;
+  const wrap = document.getElementById('alerts-list');
+  wrap.innerHTML = risky.map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--panel-raised);border:1px solid var(--line);border-radius:10px;padding:10px 14px;">
+      <div>
+        <b style="font-size:13px;">${p.name}</b>
+        <div style="font-size:11px;color:var(--text-faint);font-family:var(--mono);">${p.id} · ${p.fracture}</div>
+      </div>
+      <span class="pill warn">Δ risk</span>
+    </div>`).join('') || `<div class="desc">No elevated-risk patients this week.</div>`;
+}
+
+/* ============================================================
+   PATIENTS — LSTM panel
+============================================================ */
+function renderPatientList(){
+  const wrap = document.getElementById('patient-list');
+  wrap.innerHTML = state.patients.map((p,i) => {
+    const maxPain = 8;
+    const bars = p.pain.map(v => `<i class="${v<=3?'low':''}" style="height:${(v/maxPain)*100}%"></i>`).join('');
+    return `
+    <div class="patient-row" onclick="selectPatient(${i})" style="cursor:pointer;${state.selectedPatient===i?'border-color:var(--teal);':''}">
+      <div class="patient-name"><b>${p.name}</b><span>${p.id}</span></div>
+      <div class="tag">${p.fracture}</div>
+      <div class="tag">Week ${p.week}</div>
+      <div class="pain-seq">${bars}</div>
+      <button class="btn-outline" onclick="event.stopPropagation();selectPatient(${i});runLSTM();">Analyze</button>
+    </div>`;
+  }).join('');
+}
+
+function selectPatient(i){
+  state.selectedPatient = i;
+  const p = state.patients[i];
+  document.getElementById('lstm-desc').textContent =
+    `${p.name} — ${p.fracture} fracture, week ${p.week} of recovery. Pain trending ${p.pain[p.pain.length-1] < p.pain[0] ? 'downward' : 'flat/upward'} over ${p.pain.length} logged sessions.`;
+  renderPatientList();
+}
+
+function runLSTM(){
+  if(state.selectedPatient === null){ selectPatient(0); }
+  const p = state.patients[state.selectedPatient];
+  const out = document.getElementById('lstm-output');
+  out.innerHTML = `<div class="desc">Running sequence model…</div>`;
+
+  const recs = [];
+  const trendDown = p.pain[p.pain.length-1] < p.pain[0];
+  if(p.density < 0.75) recs.push({t:'Dietary requirement', d:'Sequential data shows calcium absorption lag. Consider Vitamin D3 + K2 supplementation.', tone:'warn'});
+  if(!trendDown) recs.push({t:'Risk alert', d:'Pain profile shows a plateau inconsistent with expected healing curve. Recommend early scan synchronization.', tone:'warn'});
+  recs.push({t:'Therapy adjustment', d:`Increase weight-bearing exercises by ${5+p.week}% to stimulate callus hardening based on historical trajectory.`, tone:'ok'});
+  recs.push({t:'Projected ETA', d:`Estimated ${p.eta} weeks to full mobility at current adherence rate.`, tone:'ok'});
+
+  setTimeout(()=>{
+    out.innerHTML = recs.map(r => `
+      <div style="background:var(--panel-raised);border-left:3px solid ${r.tone==='warn'?'var(--amber)':'var(--teal)'};border-radius:8px;padding:10px 12px;">
+        <b style="font-size:12px;display:block;margin-bottom:3px;color:${r.tone==='warn'?'var(--amber)':'var(--teal)'};">${r.t.toUpperCase()}</b>
+        <span style="font-size:12.5px;color:var(--text-dim);line-height:1.5;">${r.d}</span>
+      </div>`).join('');
+  }, 700);
+}
+
+/* ============================================================
+   SCAN ANALYSIS — simulated CNN pipeline
+============================================================ */
+let uploadedImgData = null;
+
+function handleUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    document.getElementById('preview-img').src = ev.target.result;
+    document.getElementById('preview-wrap').style.display = 'block';
+    document.getElementById('upload-label').textContent = '✓ ' + file.name;
+    document.getElementById('run-cnn-btn').disabled = false;
+    document.getElementById('result-card').style.display = 'none';
+    uploadedImgData = ev.target.result;
+    logConsole([`&gt; Image loaded: ${file.name}`, `&gt; Dimensions read, buffer staged for inference.`]);
+  };
+  reader.readAsDataURL(file);
+}
+
+function logConsole(lines, clear){
+  const c = document.getElementById('console-log');
+  if(clear) c.innerHTML = '';
+  lines.forEach((line, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'l';
+    div.style.animationDelay = (idx*0.05)+'s';
+    div.innerHTML = line;
+    c.appendChild(div);
+  });
+  c.scrollTop = c.scrollHeight;
+}
+
+function runCNN(){
+  if(!uploadedImgData) return;
+  const btn = document.getElementById('run-cnn-btn');
+  btn.disabled = true; btn.textContent = '▶ Running…';
+  document.getElementById('scan-line').style.display = 'block';
+  document.getElementById('result-card').style.display = 'none';
+
+  // deterministic pseudo-seed from image data length so results are stable per image
+  let seed = 0;
+  for(let i=0;i<uploadedImgData.length;i+=97) seed = (seed + uploadedImgData.charCodeAt(i)) % 9973;
+  const confidence = (91 + (seed % 800)/100).toFixed(1);
+  const densities = ['Normal','Slightly reduced','Osteopenic range'];
+  const density = densities[seed % 3];
+  const risks = ['Low','Moderate','Elevated'];
+  const risk = risks[Math.floor(seed/3) % 3];
+  const stages = ['Inflammatory phase — Stage 1','Soft callus phase — Stage 2','Hard callus phase — Stage 3','Remodeling phase — Stage 4'];
+  const stage = stages[seed % 4];
+
+  logConsole([], true);
+  const lines = [
+    `&gt; CNN model: ResNet-50 v2 — ready for forward pass`,
+    `&gt; Extracting feature maps <span class="tag-ok">[Conv2D → ReLU → MaxPool]</span>…`,
+    `&gt; Dense layers analyzing spatial bone density…`,
+    `&gt; Softmax classification: healing-stage head…`,
+    `&gt; Bone segmentation: <span class="tag-ok">COMPLETE</span> (confidence ${confidence}%)`,
+    `&gt; Healing stage classified: <span class="tag-ok">${stage}</span>`,
+    `&gt; Density estimate: <span class="${density==='Normal'?'tag-ok':'tag-warn'}">${density}</span>`,
+    `&gt; Mal-union risk: <span class="${risk==='Low'?'tag-ok':'tag-warn'}">${risk}</span>`,
+    `&gt; Spatial anomaly maps generated.`,
+  ];
+
+  lines.forEach((line, i)=>{
+    setTimeout(()=>logConsole([line]), i*380);
+  });
+
+  setTimeout(()=>{
+    document.getElementById('scan-line').style.display = 'none';
+    btn.disabled = false; btn.textContent = '▶ Run CNN analysis';
+    document.getElementById('res-confidence').textContent = confidence + '%';
+    document.getElementById('res-density').textContent = density;
+    document.getElementById('res-risk').textContent = risk;
+    document.querySelector('#result-card h3').textContent = stage;
+    document.getElementById('result-card').style.display = 'block';
+    toast('Scan analysis', `Classification complete — ${stage} (${confidence}% confidence).`);
+  }, lines.length*380 + 300);
+}
+
+/* ============================================================
+   TOASTS
+============================================================ */
+function toast(title, msg){
+  const host = document.getElementById('toast-host');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<b>${title}</b>${msg}`;
+  host.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(20px)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(),300); }, 5000);
+}
+
+/* ============================================================
+   3D DIGITAL TWIN — Three.js
+============================================================ */
+let twinScene, twinCamera, twinRenderer, twinControls, boneGroup, fractureLine, densityMesh;
+
+function initTwin(){
+  if(twinRenderer) return; // already initialized
+  if(typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined'){
+    document.getElementById('twin-fallback').style.display = 'flex';
+    return;
+  }
+  try{
+    initTwinInner();
+  }catch(err){
+    console.error('Twin viewer failed to initialize:', err);
+    document.getElementById('twin-fallback').style.display = 'flex';
+  }
+}
+
+function initTwinInner(){
+  const holder = document.getElementById('twin-canvas-holder');
+  const w = holder.clientWidth, h = holder.clientHeight;
+
+  twinScene = new THREE.Scene();
+  twinCamera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
+  twinCamera.position.set(0, 0, 9);
+
+  twinRenderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  twinRenderer.setSize(w, h);
+  twinRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  holder.appendChild(twinRenderer.domElement);
+
+  const ambient = new THREE.AmbientLight(0x8899cc, 0.7);
+  twinScene.add(ambient);
+  const key = new THREE.DirectionalLight(0x2dd9c4, 1.4);
+  key.position.set(4,6,6);
+  twinScene.add(key);
+  const rim = new THREE.DirectionalLight(0x9c8cff, 0.8);
+  rim.position.set(-5,-3,-4);
+  twinScene.add(rim);
+
+  boneGroup = new THREE.Group();
+  const boneMat = new THREE.MeshStandardMaterial({color:0xF1EADB, roughness:0.55, metalness:0.05, emissive:0x1a1610, emissiveIntensity:0.15});
+
+  // shaft
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 5.2, 32), boneMat);
+  boneGroup.add(shaft);
+  // epiphyses (rounded ends) using spheres, scaled to caps
+  const topCap = new THREE.Mesh(new THREE.SphereGeometry(0.95, 32, 32), boneMat);
+  topCap.position.y = 2.6; topCap.scale.set(1,0.75,1);
+  boneGroup.add(topCap);
+  const botCap = new THREE.Mesh(new THREE.SphereGeometry(1.05, 32, 32), boneMat);
+  botCap.position.y = -2.6; botCap.scale.set(1.1,0.8,1.1);
+  boneGroup.add(botCap);
+  // subtle secondary condyle bump
+  const condyle = new THREE.Mesh(new THREE.SphereGeometry(0.5,24,24), boneMat);
+  condyle.position.set(0.5,-2.9,0.2);
+  boneGroup.add(condyle);
+
+  twinScene.add(boneGroup);
+
+  // fracture overlay (jagged line across shaft)
+  const pts = [];
+  for(let i=0;i<=12;i++){
+    const t = i/12;
+    pts.push(new THREE.Vector3(Math.sin(t*14)*0.18, 0.9 - t*1.8, 0.58 + Math.cos(t*9)*0.05));
+  }
+  const fracGeo = new THREE.BufferGeometry().setFromPoints(pts);
+  const fracMat = new THREE.LineBasicMaterial({color:0xF0698A, linewidth:2});
+  fractureLine = new THREE.Line(fracGeo, fracMat);
+  boneGroup.add(fractureLine);
+
+  // density map overlay (translucent shell, toggled)
+  densityMesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.66, 0.72, 5.4, 32),
+    new THREE.MeshBasicMaterial({color:0x9C8CFF, transparent:true, opacity:0.16, wireframe:true})
+  );
+  densityMesh.visible = false;
+  boneGroup.add(densityMesh);
+
+  boneGroup.rotation.z = 0.15;
+
+  twinControls = new THREE.OrbitControls(twinCamera, twinRenderer.domElement);
+  twinControls.enableDamping = true;
+  twinControls.dampingFactor = 0.08;
+  twinControls.minDistance = 4;
+  twinControls.maxDistance = 16;
+
+  window.addEventListener('resize', onTwinResize);
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(state.twin.spin) boneGroup.rotation.y += 0.006;
+    twinControls.update();
+    twinRenderer.render(twinScene, twinCamera);
+  }
+  animate();
+}
+
+function onTwinResize(){
+  const holder = document.getElementById('twin-canvas-holder');
+  if(!twinRenderer || !holder.clientWidth) return;
+  const w = holder.clientWidth, h = holder.clientHeight;
+  twinCamera.aspect = w/h;
+  twinCamera.updateProjectionMatrix();
+  twinRenderer.setSize(w,h);
+}
+
+function toggleTwinFeature(feature){
+  state.twin[feature] = !state.twin[feature];
+  const btn = document.getElementById('toggle-'+feature);
+  btn.classList.toggle('on', state.twin[feature]);
+  if(feature === 'fracture') fractureLine.visible = state.twin.fracture;
+  if(feature === 'density') densityMesh.visible = state.twin.density;
+}
+</script>
+</body>
+</html>
